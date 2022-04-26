@@ -7,6 +7,8 @@ from data.login_form import LoginForm
 from data.users import User
 from data.jobs import Jobs
 from data.register import RegisterForm
+from data.departments import Department
+from data.add_department import AddDepartmentForm
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -144,6 +146,80 @@ def news_delete(id):
     else:
         abort(404)
     return redirect('/')
+
+
+@app.route('/departments')
+@login_required
+def departments():
+    db_sess = db_session.create_session()
+    departments = db_sess.query(Department).all()
+    users = db_sess.query(User).all()
+    names = {name.id: (name.surname, name.name) for name in users}
+    return render_template('departments.html', departments=departments, names=names, title='List of Departments')
+
+
+@app.route('/departments_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def departments_delete(id):
+    db_sess = db_session.create_session()
+    department = db_sess.query(Department).filter(Department.id == id, Department.user == current_user).first()
+    if Department:
+        db_sess.delete(department)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/departments')
+
+
+@app.route('/add_department', methods=['GET', 'POST'])
+def add_department():
+    add_form = AddDepartmentForm()
+    if add_form.validate_on_submit():
+        db_sess = db_session.create_session()
+        department = Department(
+            title=add_form.title.data,
+            chief=add_form.chief.data,
+            members=add_form.members.data,
+            email=add_form.email.data,
+        )
+        db_sess.add(department)
+        db_sess.commit()
+        return redirect('/departments')
+    return render_template('add_department.html', title='Adding a department', form=add_form)
+
+
+@app.route('/update_department/<int:id>', methods=['GET', 'POST'])
+@login_required
+def update_department(id):
+    update_form = AddDepartmentForm()
+    if request.method == 'GET':
+        db_sess = db_session.create_session()
+        job = db_sess.query(Department).filter(Department.id == id, ((Department.user == current_user) | (Department.user ==
+                                                        db_sess.query(User).filter(User.id == 1).first())))\
+            .first()
+
+        if job:
+            update_form.title.data = job.title
+            update_form.chief.data = job.chief
+            update_form.members.data = job.members
+            update_form.email.data = job.email
+        else:
+            abort(404)
+
+    if update_form.validate_on_submit():
+        db_sess = db_session.create_session()
+        department = db_sess.query(Department).filter(Department.id == id, Department.user == current_user).first()
+
+        if department:
+            department.job = update_form.title.data
+            department.team_leader = update_form.chief.data
+            department.work_size = update_form.members.data
+            department.collaborators = update_form.email.data
+            db_sess.commit()
+            return redirect('/')
+        else:
+            abort(404)
+    return render_template('add_department.html', title='редактирование департамента', form=update_form)
 
 
 def main():

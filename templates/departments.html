@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<meta charset="UTF-8">
+<h2 align="center">List of Departments</h2>
+<a href="/" class="btn btn-secondary">
+            Back to Jobs
+        </a>
+<a href="/add_department" class="btn btn-secondary">
+            Add department
+        </a>
+{% for department in departments %}
+<h3>Department # {{ department.id }}</h3>
+<div class="table_container">
+    <table class="my_table">
+        <tr class="my_row">
+            <td class="title" width="400px" bgcolor="#dddddd">Title of department</td>
+            <td class="title" width="150px" bgcolor="#dddddd">Chief</td>
+            <td class="title" width="100px" bgcolor="#dddddd" align="center">Members</td>
+            <td class="title" width="200px" bgcolor="#dddddd" align="center">Department Email</td>
+        </tr>
+        <tr class="my_row">
+            <td class="ordinary" bgcolor="#eeeeff">{{ department.title.capitalize() }}</td>
+            <td class="ordinary" bgcolor="#eeeeff">{{ names[department.chief][0] }} {{ names[department.chief][1] }}</td>
+            <td class="ordinary" bgcolor="#eeeeff" align="center">{{ department.members }} hours</td>
+            <td class="ordinary" bgcolor="#eeeeff" align="center">{{ department.email }}</td>
+        </tr>
+
+    </table>
+    {% if current_user.is_authenticated and (current_user == department.user or current_user.id == 1) %}
+    <div>
+        <a href="/update_department/{{department.id}}" class="btn btn-warning">
+            Изменить
+        </a>
+        <a href="/departments_delete/{{department.id}}" class="btn btn-danger">
+            Удалить
+        </a>
+    </div>
+{% endif %}
+</div>
+<br>
+{% endfor %}
+
+{% endblock %}
